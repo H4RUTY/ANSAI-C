@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <math.h>
 
 typedef struct Node {
     int num;
@@ -137,6 +138,11 @@ Node* insert(Node* root, int key) {
     return root;
 }
 
+typedef struct Data {
+    int height;
+    int* data;
+} Data;
+
 int getHeight(Node* root) {
     int height = 0;
     Node* now = root;
@@ -147,11 +153,34 @@ int getHeight(Node* root) {
     return height;
 }
 
-typedef struct Data {
-    int key0;
-    int key1;
-    struct Data* next;
-} Data;
+void storeTree(Node* current, Data** data, int* index, int height) {
+    if (current == NULL) return;
+
+    storeTree(current->child[0], data, index, height - 1);
+    int *tmp = realloc(data[height], sizeof(int));
+    index[height]++;
+    data[height] = *tmp;
+    {
+        int i = index[height];
+        data[height][i] = current->key[0];
+    }
+    
+    storeTree(current->child[1], data, index, height - 1);
+    int *tmp = realloc(data[height], sizeof(int));
+    index[height]++;
+    data[height] = *tmp;
+    {
+        int i = index[height];
+        data[height][i] = current->key[1];
+    }
+
+    storeTree(current->child[2], data, index, height - 1);
+}
+
+void printSpace(int num) {
+    for(int i = 0; i < num; i++)
+        printf(" ");
+}
 
 void printNode(int key0, int key1) {
     printf("[");
@@ -163,15 +192,34 @@ void printNode(int key0, int key1) {
     printf("]");
 }
 
-void printTree(Node* current, int height) {
-    if (current == NULL) return;
-    printTree(current->child[0], height - 1);
-    printf("height:[%d], key:[%d]\n", height, current->key[0]);
-    
-    printTree(current->child[1], height - 1);
-    printf("height:[%d], key:[%d]\n", height, current->key[1]);
+void printTree(Data** data, int height) {
+    for(int i = 0; i <= height; i++) {
+        int index = 0;
+        int nodeSum = (int)pow(3.0, height);
+        int all = (int)pow(3, height) * 8;
+        for(int i = 0; i < nodeSum; i++) {
+            // nodeを出力
+            printSpace(all/2 - 3);
+            printNode(data[height][index++][index++]);
+            printSpace(all/2 - 3);
+        }
+        putchar("\n");
+        if(height != 0){
+            for(int i = 0; i < nodeSum; i++) {
+                // /, |, \ を出力
+                printSpace(all/4 - 1);
+                printf("/");
+                printSpace(all/4 - 1);
+                printf("|");
+                printSpace(all/4 - 1);
+                printf("\\");
+                printSpace(all/4);
+            }
+            putchar("\n");
+        }
+        height--;
+    }
 
-    printTree(current->child[2], height - 1);
 }
 
 int main() {
@@ -181,8 +229,15 @@ int main() {
         root = insert(root, keys[i]);
     
     int height = getHeight(root);
-    printTree(root, height);
-    
-    putchar('\n');
+    int **data;
+    int *index;
+    data = malloc(sizeof(int *) * (height + 1));
+    for (int i = 0; i <= height; i++) {
+        data[i] = malloc(sizeof(int));
+        data[i][0] = i;
+        index[i] = 0;
+    }
+    storeTree(root, **data, *index, height);
+    printTree(**data, height);
     return 0;
 }
