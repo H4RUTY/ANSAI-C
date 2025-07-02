@@ -13,7 +13,7 @@ typedef struct Node {
 
 Node* createNode(int key, Node* parent) {
     Node* node = calloc(1, sizeof(Node));
-    if (!node) exit(1);
+    if(!node) exit(1);
     node->num = 1;
     node->key[0] = key;
     node->key[1] = node->key[2] = 0;
@@ -74,7 +74,7 @@ void fix(Node** root, Node* current) {
     int index;
     if(mid < parent->key[0])
         index = 0;
-    else if (parent->num == 1 || mid < parent->key[1])
+    else if(parent->num == 1 || mid < parent->key[1])
         index = 1;
     else
         index = 2;
@@ -90,7 +90,7 @@ void fix(Node** root, Node* current) {
     parent->num++;
 
     // 親もoverflow -> 再帰
-    if (parent->num == 3) {
+    if(parent->num == 3) {
         fix(root, parent);
     }
 }
@@ -100,11 +100,11 @@ Node* insert(Node* root, int key) {
         return createNode(key, NULL);
 
     Node* current = root;
-    while (current->isleaf == false) {
+    while(current->isleaf == false) {
         Node* next;
-        if (key < current->key[0])
+        if(key < current->key[0])
             next = current->child[0];
-        else if (current->num == 1 || key < current->key[1])
+        else if(current->num == 1 || key < current->key[1])
             next = current->child[1];
         else
             next = current->child[2];
@@ -113,7 +113,7 @@ Node* insert(Node* root, int key) {
         current = next;
     }
     // 重複チェック
-    for (int i = 0; i < current->num; i++)
+    for(int i = 0; i < current->num; i++)
         if(current->key[i] == key) return root;
 
     // 葉に挿入
@@ -178,20 +178,20 @@ Node* dequeue(Queue* q) {
 
 // 木全体をレベルごとに出力
 void printTree(Node* root) {
-    if (!root) return;
+    if(!root) return;
     
     Queue currLevel, nextLevel;
     initQueue(&currLevel);
     initQueue(&nextLevel);
     enqueue(&currLevel, root);
 
-    while (currLevel.size > 0) {
+    while(currLevel.size > 0) {
         int count = currLevel.size;
-        for (int i = 0; i < count; i++) {
+        for(int i = 0; i < count; i++) {
             Node* n = dequeue(&currLevel);
             
             // 1キーの場合
-            if (n->num == 1) {
+            if(n->num == 1) {
                 printf("[%d] ", n->key[0]);
             }
             // 2キーの場合
@@ -199,9 +199,9 @@ void printTree(Node* root) {
                 printf("[%d, %d] ", n->key[0], n->key[1]);
             }
             // 子ノードを次レベルへ enqueue
-            if (!n->isleaf) {
-                for (int c = 0; c <= n->num; c++) {
-                    if (n->child[c])
+            if(!n->isleaf) {
+                for(int c = 0; c <= n->num; c++) {
+                    if(n->child[c])
                         enqueue(&nextLevel, n->child[c]);
                 }
             }
@@ -232,17 +232,54 @@ int* oddRandArray(int num) {
     return keys;
 }
 
+Node* searchTree(Node* root, int key) {
+    Node* current = root;
+    while(current != NULL) {
+        for(int i = 0; i < current->num; i++) {
+            if(current->key[i] == key)
+                return current;
+        }
+        if(current->isleaf == true) break;
+        
+        // 下降⤵️
+        if(key < current->key[0])
+            current = current->child[0];
+        else if(current->num == 1 || key < current-> key[1])
+            current = current->child[1];
+        else
+            current = current->child[2];
+    }
+    return NULL;
+}
 
 int main() {
     int num = 11;
     int* keys = oddRandArray(num);
     Node* root = NULL;
     
+    // insert test
     for(int i = 0; i < num; i++) {
         printf("--insert %d--\n", keys[i]);
         root = insert(root, keys[i]);
         printTree(root);
         putchar('\n');
+    }
+    
+    // search test
+    int targets[] = {9, 18};
+    for(int t = 0; t < 2; t++) {
+        int key = targets[t];
+        Node* result = searchTree(root, key);
+        if(result) {
+            printf("Key %d found in node [", key);
+            for (int i = 0; i < result->num; i++) {
+                printf("%d", result->key[i]);
+                if (i + 1 < result->num) printf(", ");
+            }
+            printf("].\n");
+        }
+        else
+            printf("Key %d not found.\n", key);
     }
 
     free(keys);
