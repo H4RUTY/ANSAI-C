@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <math.h>
 
 typedef struct Node {
     int num;
@@ -140,123 +139,89 @@ Node* insert(Node* root, int key) {
     return root;
 }
 
-typedef struct Data {
-    int* values;
-    int count;
-} Data;
+typedef struct QNode {
+    Node* treeNode;
+    struct QNode* next;
+} QNode;
 
-int getHeight(Node* root) {
-    int height = 0;
-    Node* now = root;
-    while(now->isleaf == false) {
-        now = now->child[0];
-        height++;
-    }
-    return height;
+typedef struct Queue {
+    QNode *head, *tail;
+    int size;
+} Queue;
+
+void initQueue(Queue* q) {
+    q->head = q->tail = NULL;
+    q->size = 0;
 }
 
-void storeTree(Node* current, Data* data, int height) {
-    if (current == NULL) return;
+void enqueue(Queue* q, Node* node) {
+    QNode* qn = malloc(sizeof(QNode));
+    qn->treeNode = node;
+    qn->next = NULL;
+    if(q->tail == NULL) q->head = qn;
+    else                q->tail->next = qn;
+    q->tail = qn;
+    q->size++;
+}
 
-    // 葉の場合、子供をたどらない
-    if(current->isleaf) {
-        data[height].values = realloc(data[height].values, sizeof(int) * (data[height].count + 1));
-        data[height].values[data[height].count++] = current->key[0];
-        data[height].values = realloc(data[height].values, sizeof(int) * (data[height].count + 1));
-        data[height].values[data[height].count++] = current->key[1];
-        return;
-    }
+Node* dequeue(Queue* q) {
+    if(q->head == NULL) return NULL;
+    QNode* old = q->head;
+    Node* ret = old->treeNode;
+    q->head = old->next;
+    if(!q->head) q->tail = NULL;
+    free(old);
+    q->size--;
+    return ret;
+}
 
-    // left
-    storeTree(current->child[0], data, height - 1);
+// 木全体をレベルごとに出力
+void printTree(Node* root) {
+    if (!root) return;
     
-    /*            [0]              [1]         ...
-     * data {(values, count), (values, count), ... , }
-             |  r  |          |  r  |
-             |  e  |          |  e  |
-             |  a  |          |  a  |
-             |  l  |          |  l  |
-             |  l  |          |  l  |
-             |  o  |          |  o  |
-     count[0]|  c  |          |  c  |
-              -----           |  .  |
-                      count[1]|  .  |
-                               -----
-     */
-    data[height].values = realloc(data[height].values, sizeof(int) * (data[height].count + 1));
-    data[height].values[data[height].count++] = current->key[0];
-    
-    // middle
-    storeTree(current->child[1], data, height - 1);
-    
-    data[height].values = realloc(data[height].values, sizeof(int) * (data[height].count + 1));
-    data[height].values[data[height].count++] = current->key[1];
-        
-    // left
-    storeTree(current->child[2], data, height - 1);
-}
+    Queue currLevel, nextLevel;
+    initQueue(&currLevel);
+    initQueue(&nextLevel);
+    enqueue(&currLevel, root);
 
-void printSpace(int num) {
-    for(int i = 0; i < num; i++) putchar(' ');
-}
-
-void printNode(int key0, int key1) {
-    printf("[");
-    if(key0 == 0) printf(" *"); else printf("%2d", key0);
-    printf(",");
-    if(key1 == 0) printf(" *"); else printf("%2d", key1);
-    printf("]");
-}
-
-void printTree(Data* data, int height) {
-    for(int h = height; h >= 0; h++) {
-        int depth = height - h;
-        int nodeSum = (int)pow(3.0, depth);
-        
-        int all = (int)pow(3, h) * 8;
-        int index = 0;
-        for(int i = 0; i < nodeSum; i++) {
-            // nodeを出力
-            printSpace(all/2 - 3);
-            int k0 = data[h].values[index++];
-            int k1 = data[h].values[index++];
-            printNode(k0, k1);
-            printSpace(all/2 - 3);
+    while (currLevel.size > 0) {
+        int count = currLevel.size;
+        for (int i = 0; i < count; i++) {
+            Node* n = dequeue(&currLevel);
+            
+            // 1キーの場合
+            if (n->num == 1) {
+                printf("[%d] ", n->key[0]);
+            }
+            // 2キーの場合
+            else {
+                printf("[%d, %d] ", n->key[0], n->key[1]);
+            }
+            // 子ノードを次レベルへ enqueue
+            if (!n->isleaf) {
+                for (int c = 0; c <= n->num; c++) {
+                    if (n->child[c])
+                        enqueue(&nextLevel, n->child[c]);
+                }
+            }
         }
         putchar('\n');
-        if(h != 0){
-            for(int i = 0; i < nodeSum; i++) {
-                // /, |, \ を出力
-                printSpace(all/4 - 1);
-                printf("/");
-                printSpace(all/4 - 1);
-                printf("|");
-                printSpace(all/4 - 1);
-                printf("\\");
-                printSpace(all/4);
-            }
-            putchar('\n');
-        }
+        // レベルを進める
+        currLevel = nextLevel;
+        initQueue(&nextLevel);
     }
 }
 
 int main() {
     int keys[10] = {3, 8, 14, 20, 9, 10, 37, 2, 1, 16};
     Node* root = NULL;
-    for(int i = 0; i < 10; i++) 
+    
+    for(int i = 0; i < 10; i++) {
+        printf("--insert %d--\n", keys[i]);
         root = insert(root, keys[i]);
-    
-    int height = getHeight(root);
-    // data[height + 1] を定義
-    Data* data = calloc(height + 1, sizeof(Data));
-    
-    for (int i = 0; i <= height; i++) {
-        data[i].values = malloc(0);
-        data[i].count = 0;
+        printTree(root);
+        putchar('\n');
     }
 
-    storeTree(root, data, height);
-    printTree(data, height);
-    
     return 0;
 }
