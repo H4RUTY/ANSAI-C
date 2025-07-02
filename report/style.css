@@ -1,0 +1,58 @@
+/* ベースのスタイル */
+body {
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #2e2e2e;
+  background-color: #ffffff;
+  padding: 2rem;
+}
+
+/* 見出し */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: normal;
+  margin-top: 1.75em;
+  margin-bottom: 1em;
+  color: #1a1a1a;
+}
+
+/* 段落 */
+p {
+  margin-bottom: 1em;
+}
+
+/* インラインコード */
+code {
+  font-family: "Menlo", monospace;
+  background-color: #f4f4f4;
+  color: #2d2d2f;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* コードブロック */
+pre {
+  font-family: "Menlo", monospace;
+  background-color: #f6f8fa;
+  color: #2e2e2e;
+  padding: 1em;
+  border-radius: 8px;
+  line-height: 1.6;
+  overflow-wrap: break-word;  /* 長い単語の折り返し */
+  white-space: pre-wrap;      /* 折り返しを有効にする */
+  word-break: break-word;     /* 単語途中でも折り返し */
+  font-size: 12px;
+}
+
+/* リスト */
+ul, ol {
+  margin-bottom: 1em;
+  padding-left: 2em;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
