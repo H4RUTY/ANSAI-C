@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <time.h>
 
 typedef struct Node {
     int num;
@@ -212,16 +213,37 @@ void printTree(Node* root) {
     }
 }
 
+int* oddRandArray(int num) {
+    int* keys = malloc(sizeof(int) * num);
+    
+    // 奇数配列
+    for(int i = 0, odd = 1; i < num; i++, odd += 2) {
+        keys[i] = odd;
+    }
+
+    // ランダム入れ替え
+    srand((unsigned)time(NULL));
+    for(int i = 0; i < num; i++) {
+        int randNum = rand() % num; // 0 ~ (num-1) の範囲で乱数生成
+        int tmp = keys[i];
+        keys[i] = keys[randNum];
+        keys[randNum] = tmp;
+    }
+    return keys;
+}
+
+
 int main() {
-    int keys[10] = {3, 8, 14, 20, 9, 10, 37, 2, 1, 16};
+    int* keys = oddRandArray(11);
     Node* root = NULL;
     
-    for(int i = 0; i < 10; i++) {
+    for(int i = 0; i < 11; i++) {
         printf("--insert %d--\n", keys[i]);
         root = insert(root, keys[i]);
         printTree(root);
         putchar('\n');
     }
 
+    free(keys);
     return 0;
 }
