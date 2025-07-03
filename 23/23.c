@@ -265,7 +265,7 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
     if(targetNode->isleaf || targetNode->num == 2) {
         // 削除したいキーが左側だった場合: 削除し、右のキーを左へスライド
         if(targetIndex == 0) {
-            targetNode->key[0] == 0;
+            targetNode->key[0] = 0;
             targetNode->parent->child[0] = targetNode->parent->child[1];
             targetNode->parent->child[1] = NULL;
             return goToRoot(targetNode);
@@ -278,37 +278,50 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
     // この時、必ず targetNode->num = 1 である:
     // - 葉の場合...キーが2個の場合は上述の通り
     // - 再帰処理の場合...マージした親ノードについて呼び出しているため、キーは必ず1個
-    int slide, delete;
+    int delete, displacement;
     bool twoKeysBro = false;
     for(int i = 0; i <= parent->num; i++) {
         if(parent->child[i] == targetNode) delete = i;
         if(parent->child[i]->num == 2) {
             twoKeysBro = true;
-            slide = i;
+            displacement = (i > delete)? 1 : -1;
         }
     }
     if(twoKeysBro) {
-        int displacement = (slide > delete) ? 1 : -1;
-        while(1) {
-            /*
-             *               [ | ]
-             *              /  |  \
-             * delete->[ X ] [ | ] [ | ]<-slide
-             *        (displacement = 1)
+        /*
+         *               [ | ]
+         *              /  |  \
+         * delete->[ X ] [ | ] [ | ]
+         *        (displacement = 1)
 
-             *              [ | ]
-             *             /  |  \
-             * slide->[ | ] [ | ] [ X ]<-delete
-             *       (displacement = -1)
-             */
-            int i = delete;
-            parent->child[i]->key[0] = parent->key[i];
-            if(parent->child[i + displacement]->num == 2) {
-                parent->key[i] = parent->child[i + displacement]->key[1 - displacement];
-                // ...
-                // ...
+         *               [ | ]
+         *              /  |  \
+         *         [ | ] [ | ] [ X ]<-delete
+         *        (displacement = -1)
+         */
+        int i = delete;
+        parent->child[i]->key[0] = parent->key[i];
+        if(displacement > 0) {
+            for(;;) {
+                Node* next = 
+                // ここを書く!!
             }
         }
+        // for(;;) {
+        //     Node* next = parent->child[i + displacement];
+        //     if(next->num == 2) {
+        //         parent->key[i] = next->key[0];
+        //         next->key[0] = next->key[1];
+        //         next->key[1] = 0;
+        //         parent->child[i]->child[] next->child[0]
+        //         // 子を分配
+        //         // break;
+        //     }
+        //     else {
+        //         parent->key[i] = next->key[0];
+        //         next->key[0] = parent->key[i += displacement];
+        //     }
+        // }
     }
 }
 
