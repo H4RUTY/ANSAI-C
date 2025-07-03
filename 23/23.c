@@ -8,7 +8,7 @@ typedef struct Node {
     int key[3];             // 一時的に3つ持てるように
     struct Node *parent;
     struct Node *child[4];  // 一時的に4つ持てるように
-    bool isleaf;
+    bool isleaf;11
 } Node;
 
 Node* createNode(int key, Node* parent) {
@@ -37,8 +37,6 @@ void sortKeys(int a, int b, int c, int* out) {
     out[2] = arr[2];
 }
 
-// キーが2つの場所に挿入する
-// 二分木にした状態で渡す(current)
 void fix(Node** root, Node* current) {
     int K[3] = {current->key[0], current->key[1], current->key[2]};
     Node* C[4] = {current->child[0], current->child[1], current->child[2], current->child[3]};
@@ -55,7 +53,7 @@ void fix(Node** root, Node* current) {
      *  [C0] [C1]  [C2] [C3]  ->     [C0]  [C1]   [C2]  [C3]
      */
     left->child[0] = C[0];  if(C[0]) C[0]->parent = left;
-    left->child[1]  = C[1]; if(C[1]) C[1]->parent = left;
+    left->child[1] = C[1];  if(C[1]) C[1]->parent = left;
     right->child[0] = C[2]; if(C[2]) C[2]->parent = right;
     right->child[1] = C[3]; if(C[3]) C[3]->parent = right;
 
@@ -232,12 +230,14 @@ int* oddRandArray(int num) {
     return keys;
 }
 
-Node* searchTree(Node* root, int key) {
+Node* searchTree(Node* root, int key, int* index) {
     Node* current = root;
     while(current != NULL) {
         for(int i = 0; i < current->num; i++) {
-            if(current->key[i] == key)
+            if(current->key[i] == key) {
+                index = i;
                 return current;
+            }
         }
         if(current->isleaf == true) break;
         
@@ -250,6 +250,76 @@ Node* searchTree(Node* root, int key) {
             current = current->child[2];
     }
     return NULL;
+}
+
+// 根まで遡る
+Node* goToRoot(Node* node) {
+    Node* root = node;
+    while(root->parent != NULL) root = root->parent;
+    return root;
+}
+
+Node* recurDelete(Node* targetNode, int key, int targetIndex){
+    Node* parent = targetNode->parent;
+    if(targetNode->isleaf) {
+        // 葉で、キーが2つある場合: キーを削除
+        if(targetNode->num == 2) {
+            // 削除したいキーが左側だった場合: 削除し、右のキーを左へスライド
+            if(targetIndex == 0) {
+                targetNode->key[0] == 0;
+                targetNode->parent->child[0] = targetNode->parent->child[1];
+                targetNode->parent->child[1] = NULL;
+                return goToRoot(targetNode);
+            }
+            // 削除したいキーが右側だった場合: 削除
+            targetNode->key[1] = 0;
+            targetNode->parent->child[1] = NULL;
+            return goToRoot(targetNode);
+        }
+
+        // 葉で、キーが1つある場合: 兄弟ノードを見る
+        for(int i = 0; i < 3; i++) {
+            if(parent->child[i] == targetNode) continue; // 自分のノードは飛ばす
+            // 兄弟ノードのキーが2つある場合: キーの再配分
+            if(parent->child[i]->num == 2) {
+                Node* sortedKeys[3] = {parent->child[i]->key[0], parent->child[i]->key[1], targetNode->key[targetIndex]};
+                sortKeys(sortedKeys[0], sortedKeys[1], sortedKeys[2], sortedKeys);
+                // なんとかかんとか
+                break;
+            }
+        }
+    }
+}
+
+Node* deleteNode(Node* root, int key) {
+    int targetIndex;
+    Node* foundNode = searchTree(root, key, &targetIndex);
+
+    if(!foundNode) return NULL;
+    
+    if(foundNode->isleaf) 
+        root = recurDelete(foundNode, key, targetIndex);
+    else {
+        Node* leafNode = foundNode;
+        
+        // 右部分木に移動
+        if(foundNode->num == 1) leafNode = leafNode->child[1];
+        else leafNode = leafNode->child[2];
+        
+        // 最左葉ノードへ移動🌱
+        for(;;) {
+            if(leafNode->isleaf) break;
+            leafNode = leafNode->child[0];
+        }
+        
+        // 右部分木の最左葉ノードと交換
+        int tmp = foundNode->key[targetIndex];
+        foundNode->key[targetIndex] = leafNode->key[0];
+        leafNode->key[0] = tmp;
+
+        root = recurDelete(leafNode, key, targetIndex);
+    }
+    return root;
 }
 
 int main() {
@@ -269,7 +339,8 @@ int main() {
     int targets[] = {9, 18};
     for(int t = 0; t < 2; t++) {
         int key = targets[t];
-        Node* result = searchTree(root, key);
+        int targetIndex;
+        Node* result = searchTree(root, key, &targetIndex);
         if(result) {
             printf("Key %d found in node [", key);
             for (int i = 0; i < result->num; i++) {
