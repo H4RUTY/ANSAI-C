@@ -8,7 +8,7 @@ typedef struct Node {
     int key[3];             // 一時的に3つ持てるように
     struct Node *parent;
     struct Node *child[4];  // 一時的に4つ持てるように
-    bool isleaf;11
+    bool isleaf;
 } Node;
 
 Node* createNode(int key, Node* parent) {
@@ -261,31 +261,52 @@ Node* goToRoot(Node* node) {
 
 Node* recurDelete(Node* targetNode, int key, int targetIndex){
     Node* parent = targetNode->parent;
-    if(targetNode->isleaf) {
-        // 葉で、キーが2つある場合: キーを削除
-        if(targetNode->num == 2) {
-            // 削除したいキーが左側だった場合: 削除し、右のキーを左へスライド
-            if(targetIndex == 0) {
-                targetNode->key[0] == 0;
-                targetNode->parent->child[0] = targetNode->parent->child[1];
-                targetNode->parent->child[1] = NULL;
-                return goToRoot(targetNode);
-            }
-            // 削除したいキーが右側だった場合: 削除
-            targetNode->key[1] = 0;
+    // 葉で、キーが2つある場合: キーを削除
+    if(targetNode->isleaf || targetNode->num == 2) {
+        // 削除したいキーが左側だった場合: 削除し、右のキーを左へスライド
+        if(targetIndex == 0) {
+            targetNode->key[0] == 0;
+            targetNode->parent->child[0] = targetNode->parent->child[1];
             targetNode->parent->child[1] = NULL;
             return goToRoot(targetNode);
         }
+        // 削除したいキーが右側だった場合: 削除
+        targetNode->key[1] = 0;
+        targetNode->parent->child[1] = NULL;
+        return goToRoot(targetNode);
 
-        // 葉で、キーが1つある場合: 兄弟ノードを見る
-        for(int i = 0; i < 3; i++) {
-            if(parent->child[i] == targetNode) continue; // 自分のノードは飛ばす
-            // 兄弟ノードのキーが2つある場合: キーの再配分
-            if(parent->child[i]->num == 2) {
-                Node* sortedKeys[3] = {parent->child[i]->key[0], parent->child[i]->key[1], targetNode->key[targetIndex]};
-                sortKeys(sortedKeys[0], sortedKeys[1], sortedKeys[2], sortedKeys);
-                // なんとかかんとか
-                break;
+    // この時、必ず targetNode->num = 1 である:
+    // - 葉の場合...キーが2個の場合は上述の通り
+    // - 再帰処理の場合...マージした親ノードについて呼び出しているため、キーは必ず1個
+    int slide, delete;
+    bool twoKeysBro = false;
+    for(int i = 0; i <= parent->num; i++) {
+        if(parent->child[i] == targetNode) delete = i;
+        if(parent->child[i]->num == 2) {
+            twoKeysBro = true;
+            slide = i;
+        }
+    }
+    if(twoKeysBro) {
+        int displacement = (slide > delete) ? 1 : -1;
+        while(1) {
+            /*
+             *               [ | ]
+             *              /  |  \
+             * delete->[ X ] [ | ] [ | ]<-slide
+             *        (displacement = 1)
+
+             *              [ | ]
+             *             /  |  \
+             * slide->[ | ] [ | ] [ X ]<-delete
+             *       (displacement = -1)
+             */
+            int i = delete;
+            parent->child[i]->key[0] = parent->key[i];
+            if(parent->child[i + displacement]->num == 2) {
+                parent->key[i] = parent->child[i + displacement]->key[1 - displacement];
+                // ...
+                // ...
             }
         }
     }
