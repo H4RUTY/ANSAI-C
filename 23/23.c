@@ -235,7 +235,7 @@ Node* searchTree(Node* root, int key, int* index) {
     while(current != NULL) {
         for(int i = 0; i < current->num; i++) {
             if(current->key[i] == key) {
-                index = i;
+                *index = i;
                 return current;
             }
         }
@@ -278,50 +278,80 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
     // この時、必ず targetNode->num = 1 である:
     // - 葉の場合...キーが2個の場合は上述の通り
     // - 再帰処理の場合...マージした親ノードについて呼び出しているため、キーは必ず1個
-    int delete, displacement;
-    bool twoKeysBro = false;
+    int delete, slideNode;
+    bool hasTwoKeys = false;
     for(int i = 0; i <= parent->num; i++) {
         if(parent->child[i] == targetNode) delete = i;
         if(parent->child[i]->num == 2) {
-            twoKeysBro = true;
-            displacement = (i > delete)? 1 : -1;
+            hasTwoKeys = true;
+            slideNode = i;
         }
     }
-    if(twoKeysBro) {
-        /*
-         *               [ | ]
-         *              /  |  \
-         * delete->[ X ] [ | ] [ | ]
-         *        (displacement = 1)
-
-         *               [ | ]
-         *              /  |  \
-         *         [ | ] [ | ] [ X ]<-delete
-         *        (displacement = -1)
-         */
+    // 兄弟ノードが2つキーを持つ場合: キーと子の再配分
+    if(hasTwoKeys) {
         int i = delete;
         parent->child[i]->key[0] = parent->key[i];
-        if(displacement > 0) {
+        if(slideNode > delete) {
+            /*
+             *               [ | ]
+             *              /  |  \
+             * delete->[ X ] [ | ] [ | ]
+             */
             for(;;) {
-                Node* next = 
-                // ここを書く!!
+                if(parent->child[i + 1]->num == 2) {
+                    Node* child_l = parent->child[i];
+                    Node* child_r = parent->child[i+1];
+                    child_r->num = 1;
+                    // キーの再配分
+                    parent->key[i] = child_r->key[0];
+                    child_r->key[0] = child_r->key[1];
+                    child_r->key[1] = 0;
+                    // 子の再配分
+                    child_l->child[1] = child_r->child[0];
+                    child_l->child[1]->parent = child_l;
+                    child_r->child[1] = child_r->child[2];
+                    child_r->child[2] = NULL;
+                    return goToRoot(parent);
+                }
+                else { // そのノードのキーが一つだけの場合: スライドし繰り返す
+                    parent->key[i] = parent->child[i+1]->key[0];
+                    parent->child[i+1]->key[0] = parent->key[i+1];
+                    i++;
+                }
             }
         }
-        // for(;;) {
-        //     Node* next = parent->child[i + displacement];
-        //     if(next->num == 2) {
-        //         parent->key[i] = next->key[0];
-        //         next->key[0] = next->key[1];
-        //         next->key[1] = 0;
-        //         parent->child[i]->child[] next->child[0]
-        //         // 子を分配
-        //         // break;
-        //     }
-        //     else {
-        //         parent->key[i] = next->key[0];
-        //         next->key[0] = parent->key[i += displacement];
-        //     }
-        // }
+        else {
+            /*
+             *        [ | ]
+             *       /  |  \
+             *  [ | ] [ | ] [ X ]<-delete
+             */
+            for(;;) {
+                if(parent->child[i - 1]->num == 2) {
+                    Node* child_l = parent->child[i-1];
+                    Node* child_r = parent->child[i];
+                    child_l->num = 1;
+                    // キーの再配分
+                    parent->key[i] = child_l->key[1];
+                    child_l->key[1] = 0;
+                    // 子の再配分
+                    child_r->child[1] = child_r->child[0];
+                    child_r->child[0] = child_l->child[2];
+                    child_r->child[0]->parent = child_r;
+                    child_l->child[2] = NULL;
+                    return goToRoot(parent);
+                }
+                else { // そのノードのキーが一つだけの場合: スライドし繰り返す
+                    parent->key[i] = parent->child[i-1]->key[0];
+                    parent->child[i-1]->key[0] = parent->key[i-1];
+                    i--;
+                }
+            }
+        }
+    }
+    // 兄弟ノードがどれも1つしかキーを持たない場合: 親をマージし再帰
+    else {
+        // ここを実装しよう
     }
 }
 
