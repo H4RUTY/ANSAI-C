@@ -349,9 +349,73 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
             }
         }
     }
-    // 兄弟ノードがどれも1つしかキーを持たない場合: 親をマージし再帰
+    // 兄弟ノードがどれも1つしかキーを持たない場合
     else {
-        // ここを実装しよう
+        // 兄弟が3人いる場合: 再配分
+        if(parent->num > 1) {
+            if(targetIndex == 2) {
+                Node* child_l = parent->child[1];
+                Node* child_r = parent->child[2];
+                child_l->key[1] = parent->key[1];
+                child_l->child[2] = child_r->child[0];
+                parent->key[1] = 0;
+                child_r = NULL;
+                return goToRoot(parent);
+            }
+            if(targetIndex == 1) {
+                Node* child_l = parent->child[1];
+                Node* child_r = parent->child[2];
+                child_l->key[0] = parent->key[1];
+                child_l->key[1] = child_r->key[0];
+                child_l->child[1] = child_r->child[0];
+                child_l->child[2] = child_r->child[1];
+                parent->key[1] = 0;
+                child_r = NULL;
+                return goToRoot(parent);
+            }
+            else {
+                Node* child_l = parent->child[0];
+                Node* child_r = parent->child[1];
+                child_l->key[0] = parent->key[0];
+                child_l->key[1] = child_r->key[0];
+                parent->key[0] = parent->key[1];
+                parent->key[1] = 0;
+                child_r = parent->child[2];
+                parent->child[2] = NULL;
+                return goToRoot(parent);
+            }
+        }
+        // 兄弟が2人しかいない場合: マージし再帰
+        else {
+            if(targetIndex == 1) {
+                parent->child[0]->key[1] = parent->key[0];
+                parent->key[0] = parent->child[1]->key[0];
+                parent->child[1] = NULL;
+                int newIndex;
+                for(int i = 0; i < 3; i++) {
+                    if(parent->parent->child[i] == parent) {
+                        newIndex = i;
+                        break;
+                    }
+                }
+                recurDelete(parent, key, newIndex);
+            }
+            else {
+                int tmp = parent->child[0]->key[0];
+                parent->child[0]->key[0] = parent->key[0];
+                parent->child[0]->key[1] = parent->child[1]->key[0];
+                parent->key[0] = tmp;
+                parent->child[1] = NULL;
+                int newIndex;
+                for(int i = 0; i < 3; i++) {
+                    if(parent->parent->child[i] == parent) {
+                        newIndex = i;
+                        break;
+                    }
+                }
+                recurDelete(parent, key, newIndex);
+            }
+        }
     }
 }
 
@@ -417,6 +481,17 @@ int main() {
             printf("Key %d not found.\n", key);
     }
 
+    // delete test
+    int* deleteKeys = oddRandArray(num);
+    for(int i = 0; i < num; i++) {
+        printf("--delete %d--\n", deleteKeys[i]);
+        root = deleteNode(root, deleteKeys[i]);
+        printTree(root);
+        putchar('\n');
+    }
+
     free(keys);
     return 0;
 }
+
+// yeah!!
