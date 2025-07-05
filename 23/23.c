@@ -254,34 +254,35 @@ Node* searchTree(Node* root, int key, int* index) {
 
 // 根まで遡る
 Node* goToRoot(Node* node) {
-    Node* root = node;
-    while(root->parent != NULL) root = root->parent;
-    return root;
+    while (node->parent) node = node->parent;
+    return node;
 }
 
 Node* recurDelete(Node* targetNode, int key, int targetIndex){
     Node* parent = targetNode->parent;
     // 葉で、キーが2つある場合: キーを削除
-    if(targetNode->isleaf || targetNode->num == 2) {
+    if(targetNode->isleaf && targetNode->num == 2) {
+        fprintf(stdout, "葉でキーが二つある場合\n");
         // 削除したいキーが左側だった場合: 削除し、右のキーを左へスライド
         if(targetIndex == 0) {
-            targetNode->key[0] = 0;
-            targetNode->parent->child[0] = targetNode->parent->child[1];
-            targetNode->parent->child[1] = NULL;
+            targetNode->key[0] = targetNode->key[1];
+            targetNode->key[1] = 0;
+            targetNode->num--;
             return goToRoot(targetNode);
         }
         // 削除したいキーが右側だった場合: 削除
         targetNode->key[1] = 0;
-        targetNode->parent->child[1] = NULL;
+        targetNode->num--;
         return goToRoot(targetNode);
-
+    }
+    
     // この時、必ず targetNode->num = 1 である:
     // - 葉の場合...キーが2個の場合は上述の通り
     // - 再帰処理の場合...マージした親ノードについて呼び出しているため、キーは必ず1個
     int delete, slideNode;
     bool hasTwoKeys = false;
     for(int i = 0; i <= parent->num; i++) {
-        if(parent->child[i] == targetNode) delete = i;
+        if(parent->child[i]->key[0] == key) delete = i;
         if(parent->child[i]->num == 2) {
             hasTwoKeys = true;
             slideNode = i;
@@ -289,6 +290,7 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
     }
     // 兄弟ノードが2つキーを持つ場合: キーと子の再配分
     if(hasTwoKeys) {
+        fprintf(stdout, "2つキーを持つ兄弟ノードが存在: キーと子の再配分\n");
         int i = delete;
         parent->child[i]->key[0] = parent->key[i];
         if(slideNode > delete) {
@@ -297,7 +299,7 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
              *              /  |  \
              * delete->[ X ] [ | ] [ | ]
              */
-            for(;;) {
+            for(int j = 0; j < 2; j++) {
                 if(parent->child[i + 1]->num == 2) {
                     Node* child_l = parent->child[i];
                     Node* child_r = parent->child[i+1];
@@ -326,7 +328,7 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
              *       /  |  \
              *  [ | ] [ | ] [ X ]<-delete
              */
-            for(;;) {
+            for(int j = 0; j < 2; j++) {
                 if(parent->child[i - 1]->num == 2) {
                     Node* child_l = parent->child[i-1];
                     Node* child_r = parent->child[i];
@@ -353,40 +355,42 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
     else {
         // 兄弟が3人いる場合: 再配分
         if(parent->num > 1) {
-            if(targetIndex == 2) {
-                Node* child_l = parent->child[1];
-                Node* child_r = parent->child[2];
-                child_l->key[1] = parent->key[1];
-                child_l->child[2] = child_r->child[0];
+            fprintf(stdout, "兄弟ノードがどれも一つしかキーを持たないが、兄弟が3人いるので再配分\n");
+            if(parent->child[2]->key[0] == key) {
+                parent->child[1]->key[1] = parent->key[1];
+                parent->child[1]->child[2] = parent->child[2]->child[0];
                 parent->key[1] = 0;
-                child_r = NULL;
+                parent->child[2] = NULL;
+                parent->num = 1;
                 return goToRoot(parent);
             }
-            if(targetIndex == 1) {
-                Node* child_l = parent->child[1];
-                Node* child_r = parent->child[2];
-                child_l->key[0] = parent->key[1];
-                child_l->key[1] = child_r->key[0];
-                child_l->child[1] = child_r->child[0];
-                child_l->child[2] = child_r->child[1];
+            if(parent->child[1]->key[0] == key) {
+                parent->child[1]->key[0] = parent->key[1];
+                parent->child[1]->key[1] = parent->child[2]->key[0];
+                parent->child[1]->child[1] = parent->child[2]->child[0];
+                parent->child[1]->child[2] = parent->child[2]->child[1];
                 parent->key[1] = 0;
-                child_r = NULL;
+                parent->child[2] = NULL;
+                parent->num = 1;
                 return goToRoot(parent);
             }
             else {
-                Node* child_l = parent->child[0];
-                Node* child_r = parent->child[1];
-                child_l->key[0] = parent->key[0];
-                child_l->key[1] = child_r->key[0];
+                parent->child[0]->key[0] = parent->key[0];
+                parent->child[0]->key[1] = parent->child[1]->key[0];
                 parent->key[0] = parent->key[1];
-                parent->key[1] = 0;
-                child_r = parent->child[2];
+                parent->child[1] = parent->child[2];
+                parent->child[0]->child[1] = parent->child[1]->child[0];
+                parent->child[0]->child[2] = parent->child[1]->child[1];
+                parent->child[1]->child[0] = parent->child[2]->child[0];
+                parent->child[1]->child[1] = parent->child[2]->child[1];
                 parent->child[2] = NULL;
+                parent->num = 1;
                 return goToRoot(parent);
             }
         }
         // 兄弟が2人しかいない場合: マージし再帰
         else {
+            fprintf(stdout, "兄弟ノードがどれも一つしかキーを持たず、兄弟が二人だけなのでマージし再帰\n");
             if(targetIndex == 1) {
                 parent->child[0]->key[1] = parent->key[0];
                 parent->key[0] = parent->child[1]->key[0];
@@ -422,31 +426,36 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
 Node* deleteNode(Node* root, int key) {
     int targetIndex;
     Node* foundNode = searchTree(root, key, &targetIndex);
+    fprintf(stdout, "targetIndex ... %d\n", targetIndex);
 
     if(!foundNode) return NULL;
     
-    if(foundNode->isleaf) 
+    if(foundNode->isleaf) {
+        fprintf(stdout, "削除するノードが葉なのでそのまま削除を開始\n");
         root = recurDelete(foundNode, key, targetIndex);
-    else {
-        Node* leafNode = foundNode;
-        
-        // 右部分木に移動
-        if(foundNode->num == 1) leafNode = leafNode->child[1];
-        else leafNode = leafNode->child[2];
-        
-        // 最左葉ノードへ移動🌱
-        for(;;) {
-            if(leafNode->isleaf) break;
-            leafNode = leafNode->child[0];
-        }
-        
-        // 右部分木の最左葉ノードと交換
-        int tmp = foundNode->key[targetIndex];
-        foundNode->key[targetIndex] = leafNode->key[0];
-        leafNode->key[0] = tmp;
-
-        root = recurDelete(leafNode, key, targetIndex);
+        return root;
     }
+    
+    Node* leafNode = foundNode;
+    // 右部分木に移動
+    if(foundNode->num == 1) leafNode = leafNode->child[1];
+    else leafNode = leafNode->child[2];
+        
+    // 最左葉ノードへ移動🌱
+    for(;;) {
+        if(leafNode->isleaf) break;
+        leafNode = leafNode->child[0];
+    }
+        
+    // 右部分木の最左葉ノードと交換
+    int tmp = foundNode->key[targetIndex];
+    foundNode->key[targetIndex] = leafNode->key[0];
+    targetIndex = 0;
+    leafNode->key[0] = tmp;
+
+    fprintf(stdout, "削除するノードが内部ノードなので、右部分木の最左葉ノードと交換し削除を開始\n");
+    printTree(root);
+    root = recurDelete(leafNode, key, targetIndex);
     return root;
 }
 
@@ -480,11 +489,15 @@ int main() {
         else
             printf("Key %d not found.\n", key);
     }
-
+    putchar('\n');
+    
     // delete test
     int* deleteKeys = oddRandArray(num);
     for(int i = 0; i < num; i++) {
         printf("--delete %d--\n", deleteKeys[i]);
+        int targetIndex;
+        Node* result = searchTree(root, deleteKeys[i], &targetIndex);
+        if(result == NULL) printf("Key %d not found.\n", deleteKeys[i]);
         root = deleteNode(root, deleteKeys[i]);
         printTree(root);
         putchar('\n');
