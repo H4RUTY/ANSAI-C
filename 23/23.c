@@ -264,7 +264,6 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
     Node* parent = targetNode->parent;
     // 葉で、キーが2つある場合: キーを削除
     if(targetNode->isleaf && targetNode->num == 2) {
-        fprintf(stdout, "葉でキーが二つある場合\n");
         // 削除したいキーが左側だった場合: 削除し、右のキーを左へスライド
         if(targetIndex == 0) {
             targetNode->key[0] = targetNode->key[1];
@@ -282,12 +281,8 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
     if(parent == NULL) {
         if(targetNode->isleaf) return NULL; // 葉(キーは1個)の場合、NULLを返す
         
-        fprintf(stdout, "targetNode: %d\n", targetNode->key[0]);
-        fprintf(stdout, "targetNode->child[0]: %d\n", targetNode->child[0]->key[0]);
-        fprintf(stdout, "根を削除\n");
         Node* newroot = targetNode->child[0];
         newroot->parent = NULL;
-        fprintf(stdout, "newroot->key[0] = %d\n", newroot->key[0]);
         return newroot;
     }
     
@@ -299,8 +294,6 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
         if(parent->child[i]->key[0] == key) delete = i;
     }
 
-    fprintf(stdout, "delete = %d.\n", delete);
-
     bool case1=false, case2=false, case3=false, case4=false;
     if(parent->num == 1) {
         if(delete == 0 && parent->child[1]->num == 2) case1 = true;
@@ -311,7 +304,6 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
         if(delete > 1 && parent->child[delete-1]->num == 2) case4 = true;
     }
     if(case1 || case2) {
-        fprintf(stdout, "-1-\n");
         /*
          *     [ | ]      |    [ ]
          *   /   |   \    |   /   \
@@ -337,7 +329,6 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
         return goToRoot(parent);
     }
     if(case3 || case4) {
-            fprintf(stdout, "-2-\n");
             /*
              *     [ | ]
              *   /   |   \
@@ -363,9 +354,7 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
 
     // 隣ノードが1つキーを持つ、3兄弟の場合
     if(parent->num > 1) {
-        fprintf(stdout, "隣ノードが1つキーを持つ、3兄弟の場合: 再配分\n");
         if(parent->child[2]->key[0] == key) {
-            fprintf(stdout, "-3-\n");
             parent->child[1]->key[1] = parent->key[1];
             parent->child[1]->num = 2;
             parent->child[1]->child[2] = parent->child[2]->child[0];
@@ -375,7 +364,6 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
             return goToRoot(parent);
         }
         if(parent->child[1]->key[0] == key) {
-            fprintf(stdout, "-4-\n");
             parent->child[1]->key[0] = parent->key[1];
             parent->child[1]->key[1] = parent->child[2]->key[0];
             parent->child[1]->num = 2;
@@ -387,7 +375,6 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
             return goToRoot(parent);
         }
         else {
-            fprintf(stdout, "-5-\n");
             parent->child[0]->key[0] = parent->key[0];
             parent->child[0]->key[1] = parent->child[1]->key[0];
             parent->child[0]->num = 2;
@@ -402,9 +389,7 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
     }
     // 隣ノードが1つキーを持つ、2兄弟の場合
     if(parent->num == 1) {
-        fprintf(stdout, "兄弟が二人だけで、兄弟のキーが一つだけなのでマージし再帰\n");
         if(parent->child[1]->key[0] == key) {
-            fprintf(stdout, "-6-\n");
             parent->child[0]->key[1] = parent->key[0];
             parent->child[0]->num = 2;
             parent->key[0] = parent->child[1]->key[0];
@@ -413,12 +398,9 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
                 parent->child[0]->child[2]->parent = parent->child[0];
             }
             parent->child[1] = NULL;
-            Node* tmproot = goToRoot(parent);
-            printTree(tmproot);
             return recurDelete(parent, key, 0);
             }
         else {
-            fprintf(stdout, "-7-\n");
             int tmp = parent->child[0]->key[0];
             parent->child[0]->key[0] = parent->key[0];
             parent->child[0]->key[1] = parent->child[1]->key[0];
@@ -431,8 +413,6 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
                 parent->child[0]->child[2]->parent = parent->child[0];
             }
             parent->child[1] = NULL;
-            Node* tmproot = goToRoot(parent);
-            printTree(tmproot);
             return recurDelete(parent, key, 0);
         }
     }
@@ -442,27 +422,18 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
 Node* deleteNode(Node* root, int key) {
     int targetIndex;
     Node* foundNode = searchTree(root, key, &targetIndex);
-    fprintf(stdout, "targetIndex ... %d\n", targetIndex);
 
     if(!foundNode) return NULL;
     
     if(foundNode->isleaf) {
-        fprintf(stdout, "削除するノードが葉なのでそのまま削除を開始\n");
         root = recurDelete(foundNode, key, targetIndex);
-        fprintf(stdout, "root->key[0](deleteNode内) = %d\n", root->key[0]);
         return root;
     }
     
     Node* leafNode = foundNode;
     // 右部分木に移動
-    if(foundNode->key[0] == key) {
-        fprintf(stdout, "key0\n");
-        leafNode = leafNode->child[1];
-    }
-    else {
-        fprintf(stdout, "key1\n");
-        leafNode = leafNode->child[2];
-    }
+    if(foundNode->key[0] == key) leafNode = leafNode->child[1];
+    else leafNode = leafNode->child[2];
         
     // 最左葉ノードへ移動🌱
     for(;;) {
@@ -476,10 +447,10 @@ Node* deleteNode(Node* root, int key) {
     targetIndex = 0;
     leafNode->key[0] = tmp;
 
-    fprintf(stdout, "削除するノードが内部ノードなので、右部分木の最左葉ノードと交換し削除を開始\n");
+    printf("1. exchange with leftmost leafNode of right subTree\n");
     printTree(root);
+    putchar('\n');
     root = recurDelete(leafNode, key, targetIndex);
-    fprintf(stdout, "root->key[0](deleteNode内) = %d\n", root->key[0]);
     return root;
 }
 
@@ -523,7 +494,6 @@ int main() {
         Node* result = searchTree(root, deleteKeys[i], &targetIndex);
         if(result == NULL) printf("Key %d not found.\n", deleteKeys[i]);
         root = deleteNode(root, deleteKeys[i]);
-        fprintf(stdout, "root->key[0] = %d\n", root->key[0]);
         printTree(root);
         putchar('\n');
     }
@@ -531,5 +501,3 @@ int main() {
     free(keys);
     return 0;
 }
-
-// yeah!!
