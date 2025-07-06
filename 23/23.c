@@ -158,7 +158,7 @@ void enqueue(Queue* q, Node* node) {
     qn->treeNode = node;
     qn->next = NULL;
     if(q->tail == NULL) q->head = qn;
-    else                q->tail->next = qn;
+    else q->tail->next = qn;
     q->tail = qn;
     q->size++;
 }
@@ -447,9 +447,9 @@ Node* deleteNode(Node* root, int key) {
     targetIndex = 0;
     leafNode->key[0] = tmp;
 
-    printf("1. exchange with leftmost leafNode of right subTree\n");
-    printTree(root);
-    putchar('\n');
+    // printTree(root);
+    // printf("(exchange with leftmost leafNode of right subTree)\n");
+    // putchar('\n');
     root = recurDelete(leafNode, key, targetIndex);
     return root;
 }
@@ -472,6 +472,7 @@ int main() {
     for(int t = 0; t < 2; t++) {
         int key = targets[t];
         int targetIndex;
+        printf("--search %d--\n", targets[t]);
         Node* result = searchTree(root, key, &targetIndex);
         if(result) {
             printf("Key %d found in node [", key);
@@ -483,8 +484,8 @@ int main() {
         }
         else
             printf("Key %d not found.\n", key);
+        putchar('\n');
     }
-    putchar('\n');
     
     // delete test
     int* deleteKeys = oddRandArray(num);
