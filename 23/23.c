@@ -176,8 +176,10 @@ Node* dequeue(Queue* q) {
 
 // 木全体をレベルごとに出力
 void printTree(Node* root) {
-    if(!root) return;
-    
+    if(root == NULL ) {
+        printf("there's no tree.\n");
+        return;
+    }
     Queue currLevel, nextLevel;
     initQueue(&currLevel);
     initQueue(&nextLevel);
@@ -275,152 +277,166 @@ Node* recurDelete(Node* targetNode, int key, int targetIndex){
         targetNode->num--;
         return goToRoot(targetNode);
     }
+
+    // ターゲットが根の場合、根を削除することになるので、根を更新しreturn
+    if(parent == NULL) {
+        if(targetNode->isleaf) return NULL; // 葉(キーは1個)の場合、NULLを返す
+        
+        fprintf(stdout, "targetNode: %d\n", targetNode->key[0]);
+        fprintf(stdout, "targetNode->child[0]: %d\n", targetNode->child[0]->key[0]);
+        fprintf(stdout, "根を削除\n");
+        Node* newroot = targetNode->child[0];
+        newroot->parent = NULL;
+        fprintf(stdout, "newroot->key[0] = %d\n", newroot->key[0]);
+        return newroot;
+    }
     
     // この時、必ず targetNode->num = 1 である:
-    // - 葉の場合...キーが2個の場合は上述の通り
-    // - 再帰処理の場合...マージした親ノードについて呼び出しているため、キーは必ず1個
-    int delete, slideNode;
-    bool hasTwoKeys = false;
+    // 葉の場合は上述の通りだし、再帰処理の場合は、
+    // マージした親ノードについて呼び出しているため、キーは必ず1個
+    int delete;
     for(int i = 0; i <= parent->num; i++) {
         if(parent->child[i]->key[0] == key) delete = i;
-        if(parent->child[i]->num == 2) {
-            hasTwoKeys = true;
-            slideNode = i;
-        }
     }
-    // 兄弟ノードが2つキーを持つ場合: キーと子の再配分
-    if(hasTwoKeys) {
-        fprintf(stdout, "2つキーを持つ兄弟ノードが存在: キーと子の再配分\n");
+
+    fprintf(stdout, "delete = %d.\n", delete);
+
+    bool case1=false, case2=false, case3=false, case4=false;
+    if(parent->num == 1) {
+        if(delete == 0 && parent->child[1]->num == 2) case1 = true;
+        if(delete == 1 && parent->child[0]->num == 2) case3 = true;
+    }
+    if(parent->num == 2) {
+        if(delete < 2 && parent->child[delete+1]->num == 2) case2 = true;
+        if(delete > 1 && parent->child[delete-1]->num == 2) case4 = true;
+    }
+    if(case1 || case2) {
+        fprintf(stdout, "-1-\n");
+        /*
+         *     [ | ]      |    [ ]
+         *   /   |   \    |   /   \
+         * [X] [ | ] [ ]  | [X]  [ | ]
+         *   もしくは...
+         *    [ | ]
+         *   /  |  \
+         * [ ] [X] [ | ] i = 1
+         */
         int i = delete;
         parent->child[i]->key[0] = parent->key[i];
-        if(slideNode > delete) {
+        parent->key[i] = parent->child[i+1]->key[0];
+        parent->child[i+1]->key[0] = parent->child[i+1]->key[1];
+        parent->child[i+1]->key[1] = 0;
+        parent->child[i+1]->num = 1;
+        if(!parent->child[i]->isleaf) {
+            parent->child[i]->child[1] = parent->child[i+1]->child[0];
+            parent->child[i]->child[1]->parent = parent->child[i];
+            parent->child[i+1]->child[0] = parent->child[i+1]->child[1];
+             parent->child[i+1]->child[1] = parent->child[i+1]->child[2];
+            parent->child[i+1]->child[2] = NULL;
+        }
+        return goToRoot(parent);
+    }
+    if(case3 || case4) {
+            fprintf(stdout, "-2-\n");
             /*
-             *               [ | ]
-             *              /  |  \
-             * delete->[ X ] [ | ] [ | ]
+             *     [ | ]
+             *   /   |   \
+             * [ ] [ | ] [X]  
+             *   もしくは...
+             *      [ | ]     |      [ ]
+             *     /  |  \    |     /   \
+             * [ | ] [X] [ ]  |  [ | ]  [X]
              */
-            for(int j = 0; j < 2; j++) {
-                if(parent->child[i + 1]->num == 2) {
-                    Node* child_l = parent->child[i];
-                    Node* child_r = parent->child[i+1];
-                    child_r->num = 1;
-                    // キーの再配分
-                    parent->key[i] = child_r->key[0];
-                    child_r->key[0] = child_r->key[1];
-                    child_r->key[1] = 0;
-                    // 子の再配分
-                    child_l->child[1] = child_r->child[0];
-                    child_l->child[1]->parent = child_l;
-                    child_r->child[1] = child_r->child[2];
-                    child_r->child[2] = NULL;
-                    return goToRoot(parent);
-                }
-                else { // そのノードのキーが一つだけの場合: スライドし繰り返す
-                    parent->key[i] = parent->child[i+1]->key[0];
-                    parent->child[i+1]->key[0] = parent->key[i+1];
-                    i++;
-                }
+            int i = delete;
+            parent->child[i]->key[0] = parent->key[i-1];
+            parent->key[i-1] = parent->child[i-1]->key[1];
+            parent->child[i-1]->key[1] = 0;
+            parent->child[i-1]->num = 1;
+            if(!parent->child[i]->isleaf) {
+                parent->child[i]->child[1] = parent->child[i]->child[0];
+                parent->child[i]->child[0] = parent->child[i-1]->child[2];
+                parent->child[i]->child[0]->parent = parent->child[i];
+                parent->child[i-1]->child[2] = NULL;
             }
+            return goToRoot(parent);
+    }
+
+    // 隣ノードが1つキーを持つ、3兄弟の場合
+    if(parent->num > 1) {
+        fprintf(stdout, "隣ノードが1つキーを持つ、3兄弟の場合: 再配分\n");
+        if(parent->child[2]->key[0] == key) {
+            fprintf(stdout, "-3-\n");
+            parent->child[1]->key[1] = parent->key[1];
+            parent->child[1]->num = 2;
+            parent->child[1]->child[2] = parent->child[2]->child[0];
+            parent->key[1] = 0;
+            parent->child[2] = NULL;
+            parent->num = 1;
+            return goToRoot(parent);
+        }
+        if(parent->child[1]->key[0] == key) {
+            fprintf(stdout, "-4-\n");
+            parent->child[1]->key[0] = parent->key[1];
+            parent->child[1]->key[1] = parent->child[2]->key[0];
+            parent->child[1]->num = 2;
+            parent->child[1]->child[1] = parent->child[2]->child[0];
+            parent->child[1]->child[2] = parent->child[2]->child[1];
+            parent->key[1] = 0;
+            parent->child[2] = NULL;
+            parent->num = 1;
+            return goToRoot(parent);
         }
         else {
-            /*
-             *        [ | ]
-             *       /  |  \
-             *  [ | ] [ | ] [ X ]<-delete
-             */
-            for(int j = 0; j < 2; j++) {
-                if(parent->child[i - 1]->num == 2) {
-                    Node* child_l = parent->child[i-1];
-                    Node* child_r = parent->child[i];
-                    child_l->num = 1;
-                    // キーの再配分
-                    parent->key[i] = child_l->key[1];
-                    child_l->key[1] = 0;
-                    // 子の再配分
-                    child_r->child[1] = child_r->child[0];
-                    child_r->child[0] = child_l->child[2];
-                    child_r->child[0]->parent = child_r;
-                    child_l->child[2] = NULL;
-                    return goToRoot(parent);
-                }
-                else { // そのノードのキーが一つだけの場合: スライドし繰り返す
-                    parent->key[i] = parent->child[i-1]->key[0];
-                    parent->child[i-1]->key[0] = parent->key[i-1];
-                    i--;
-                }
-            }
+            fprintf(stdout, "-5-\n");
+            parent->child[0]->key[0] = parent->key[0];
+            parent->child[0]->key[1] = parent->child[1]->key[0];
+            parent->child[0]->num = 2;
+            parent->key[0] = parent->key[1];
+            parent->child[1] = parent->child[2];
+            parent->child[0]->child[1] = parent->child[1]->child[0];
+            parent->child[0]->child[2] = parent->child[1]->child[1];
+            parent->child[2] = NULL;
+            parent->num = 1;
+            return goToRoot(parent);
         }
     }
-    // 兄弟ノードがどれも1つしかキーを持たない場合
-    else {
-        // 兄弟が3人いる場合: 再配分
-        if(parent->num > 1) {
-            fprintf(stdout, "兄弟ノードがどれも一つしかキーを持たないが、兄弟が3人いるので再配分\n");
-            if(parent->child[2]->key[0] == key) {
-                parent->child[1]->key[1] = parent->key[1];
-                parent->child[1]->child[2] = parent->child[2]->child[0];
-                parent->key[1] = 0;
-                parent->child[2] = NULL;
-                parent->num = 1;
-                return goToRoot(parent);
+    // 隣ノードが1つキーを持つ、2兄弟の場合
+    if(parent->num == 1) {
+        fprintf(stdout, "兄弟が二人だけで、兄弟のキーが一つだけなのでマージし再帰\n");
+        if(parent->child[1]->key[0] == key) {
+            fprintf(stdout, "-6-\n");
+            parent->child[0]->key[1] = parent->key[0];
+            parent->child[0]->num = 2;
+            parent->key[0] = parent->child[1]->key[0];
+            if(!parent->child[0]->isleaf) {
+                parent->child[0]->child[2] = parent->child[1]->child[0];
+                parent->child[0]->child[2]->parent = parent->child[0];
             }
-            if(parent->child[1]->key[0] == key) {
-                parent->child[1]->key[0] = parent->key[1];
-                parent->child[1]->key[1] = parent->child[2]->key[0];
-                parent->child[1]->child[1] = parent->child[2]->child[0];
-                parent->child[1]->child[2] = parent->child[2]->child[1];
-                parent->key[1] = 0;
-                parent->child[2] = NULL;
-                parent->num = 1;
-                return goToRoot(parent);
+            parent->child[1] = NULL;
+            Node* tmproot = goToRoot(parent);
+            printTree(tmproot);
+            return recurDelete(parent, key, 0);
             }
-            else {
-                parent->child[0]->key[0] = parent->key[0];
-                parent->child[0]->key[1] = parent->child[1]->key[0];
-                parent->key[0] = parent->key[1];
-                parent->child[1] = parent->child[2];
+        else {
+            fprintf(stdout, "-7-\n");
+            int tmp = parent->child[0]->key[0];
+            parent->child[0]->key[0] = parent->key[0];
+            parent->child[0]->key[1] = parent->child[1]->key[0];
+            parent->child[0]->num = 2;
+            parent->key[0] = tmp;
+            if(!parent->child[1]->isleaf) {
                 parent->child[0]->child[1] = parent->child[1]->child[0];
+                parent->child[0]->child[1]->parent = parent->child[0];
                 parent->child[0]->child[2] = parent->child[1]->child[1];
-                parent->child[1]->child[0] = parent->child[2]->child[0];
-                parent->child[1]->child[1] = parent->child[2]->child[1];
-                parent->child[2] = NULL;
-                parent->num = 1;
-                return goToRoot(parent);
+                parent->child[0]->child[2]->parent = parent->child[0];
             }
-        }
-        // 兄弟が2人しかいない場合: マージし再帰
-        else {
-            fprintf(stdout, "兄弟ノードがどれも一つしかキーを持たず、兄弟が二人だけなのでマージし再帰\n");
-            if(targetIndex == 1) {
-                parent->child[0]->key[1] = parent->key[0];
-                parent->key[0] = parent->child[1]->key[0];
-                parent->child[1] = NULL;
-                int newIndex;
-                for(int i = 0; i < 3; i++) {
-                    if(parent->parent->child[i] == parent) {
-                        newIndex = i;
-                        break;
-                    }
-                }
-                recurDelete(parent, key, newIndex);
-            }
-            else {
-                int tmp = parent->child[0]->key[0];
-                parent->child[0]->key[0] = parent->key[0];
-                parent->child[0]->key[1] = parent->child[1]->key[0];
-                parent->key[0] = tmp;
-                parent->child[1] = NULL;
-                int newIndex;
-                for(int i = 0; i < 3; i++) {
-                    if(parent->parent->child[i] == parent) {
-                        newIndex = i;
-                        break;
-                    }
-                }
-                recurDelete(parent, key, newIndex);
-            }
+            parent->child[1] = NULL;
+            Node* tmproot = goToRoot(parent);
+            printTree(tmproot);
+            return recurDelete(parent, key, 0);
         }
     }
+    return goToRoot(parent);
 }
 
 Node* deleteNode(Node* root, int key) {
@@ -433,13 +449,20 @@ Node* deleteNode(Node* root, int key) {
     if(foundNode->isleaf) {
         fprintf(stdout, "削除するノードが葉なのでそのまま削除を開始\n");
         root = recurDelete(foundNode, key, targetIndex);
+        fprintf(stdout, "root->key[0](deleteNode内) = %d\n", root->key[0]);
         return root;
     }
     
     Node* leafNode = foundNode;
     // 右部分木に移動
-    if(foundNode->num == 1) leafNode = leafNode->child[1];
-    else leafNode = leafNode->child[2];
+    if(foundNode->key[0] == key) {
+        fprintf(stdout, "key0\n");
+        leafNode = leafNode->child[1];
+    }
+    else {
+        fprintf(stdout, "key1\n");
+        leafNode = leafNode->child[2];
+    }
         
     // 最左葉ノードへ移動🌱
     for(;;) {
@@ -456,6 +479,7 @@ Node* deleteNode(Node* root, int key) {
     fprintf(stdout, "削除するノードが内部ノードなので、右部分木の最左葉ノードと交換し削除を開始\n");
     printTree(root);
     root = recurDelete(leafNode, key, targetIndex);
+    fprintf(stdout, "root->key[0](deleteNode内) = %d\n", root->key[0]);
     return root;
 }
 
@@ -499,6 +523,7 @@ int main() {
         Node* result = searchTree(root, deleteKeys[i], &targetIndex);
         if(result == NULL) printf("Key %d not found.\n", deleteKeys[i]);
         root = deleteNode(root, deleteKeys[i]);
+        fprintf(stdout, "root->key[0] = %d\n", root->key[0]);
         printTree(root);
         putchar('\n');
     }
