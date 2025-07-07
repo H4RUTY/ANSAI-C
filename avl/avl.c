@@ -90,7 +90,7 @@ Node* insert(Node* node, int key) {
 
 Node* search(Node* node, int key) {
     if (!node) {
-        printf("%dは見つかりませんでした\n", key);
+        printf("key %d not found.\n", key);
         return NULL;
     }
     if (key < node->key)
@@ -98,7 +98,7 @@ Node* search(Node* node, int key) {
     else if (key > node->key)
         return search(node->right, key);
     else {
-        printf("%dが見つかりました\n", key);
+        printf("key %d found.\n", key);
         return node;
     }
 }
@@ -112,7 +112,7 @@ Node* minValueNode(Node *node) {
 
 Node* removeNode(Node* node, int key) {
     if (!node) {
-        printf("%dは見つかりませんでした\n", key);
+        printf("key %d not found.\n", key);
         return NULL;
     }
     if (key < node->key)
@@ -198,32 +198,34 @@ void printTree(Node* root, int space) {
 
 int main() {
     Node* root = NULL;
-    int command;
 
-    for(;;){
-        printf("挿入:0 探索:1 削除:2 終了:3\n");
-        scanf("%d", &command);
-        if (command == 3) break;
-        
-        int key;
-        switch (command) {
-            case 0:
-                printf("挿入するキーを入力:");
-                scanf("%d", &key);
-                root = insert(root, key);
-                printTree(root, 0);
-                break;
-            case 1:
-                printf("検索するキーを入力:");
-                scanf("%d", &key);
-                search(root, key);
-                break;
-            case 2:
-                printf("削除するキーを入力:");
-                scanf("%d", &key);
-                root = removeNode(root, key);
-                printTree(root, 0);
-                break;
-        }
+    // insert
+    printf("--insert test--\n");
+    int insertKeys[] = {7, 4, 3, 1, 5, 2};
+    for (int i = 0; i < 6; i++) {
+        printf("insert %d:\n", insertKeys[i]);
+        root = insert(root, insertKeys[i]);
+        printTree(root, 0);
+        putchar('\n');
     }
+
+    // search
+    printf("--search test--\n");
+    int searchKeys[] = {3, 6};
+    for (int i = 0; i < 2; i++) {
+        search(root, searchKeys[i]);
+    }
+    putchar('\n');
+
+    // delete
+    printf("--delete test--\n");
+    int deleteKeys[] = {2, 4, 7, 3, 5, 1};
+    for (int i = 0; i < 6; i++) {
+        printf("delete %d:\n", deleteKeys[i]);
+        root = removeNode(root, deleteKeys[i]);
+        printTree(root, 0);
+        putchar('\n');
+    }
+    
+    return 0;
 }
