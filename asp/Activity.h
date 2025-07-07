@@ -1,4 +1,3 @@
-// Activity.h
 typedef struct  {
 	char name[100];
 	int start;
