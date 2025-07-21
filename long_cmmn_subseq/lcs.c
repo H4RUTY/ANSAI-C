@@ -64,6 +64,13 @@ void lcs(char *x0, char *y0){
     }
 
     // print
+    printf("文字列x: ");
+    for (int i = 1; i < lx; i++) printf("%c", x[i]);
+    printf("\n");
+    printf("文字列y: ");
+    for (int i = 1; i < ly; i++) printf("%c", y[i]);
+    printf("\n\n");
+
     printf("再長共通部分:\n");
     for (int i = 1; i < lx; i++) {
         if (common_x[i]) printf("%c", x[i]);

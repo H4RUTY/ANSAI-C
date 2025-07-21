@@ -1,6 +1,6 @@
-# include <stdlib.h>
-# include <stdio.h>
-# include "Activity.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include "Activity.h"
 extern unsigned num;
 extern ACT activity[];
 

@@ -117,7 +117,7 @@ int main(void) {
     printf("鶏特盛つけ麺: %.0f個\n", x2);
     printf("DXつけ麺: %.0f個\n", x3);
 
-    double maxPrft = 850 * x1 + 950 * x2 + 110 * x3;
+    double maxPrft = 850 * x1 + 950 * x2 + 1100 * x3;
     printf("最大利益: %.0f円\n", maxPrft);
     
     return 0;
