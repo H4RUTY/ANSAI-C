@@ -23,7 +23,7 @@ p {
 
 /* インラインコード */
 code {
-  font-family: "Menlo", monospace;
+  font-family: "Agave", "Menlo", monospace;
   background-color: #f4f4f4;
   color: #2d2d2f;
   padding: 2px 6px;

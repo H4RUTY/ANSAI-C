@@ -45,7 +45,6 @@ void print() {
         }
         printf(" | ");
     }
-    printf("\n");
 }
 
 int main() {
