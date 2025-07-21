@@ -99,6 +99,13 @@ Node* insert(Node* root, int key) {
 
     Node* current = root;
     while(current->isleaf == false) {
+
+        // 内部ノードの重複チェック
+        for(int i = 0; i < current->num; i++) {
+            if(current->key[i] == key)
+                return root;
+        }
+
         Node* next;
         if(key < current->key[0])
             next = current->child[0];
@@ -110,10 +117,7 @@ Node* insert(Node* root, int key) {
         if(next == NULL) break;
         current = next;
     }
-    // 重複チェック
-    for(int i = 0; i < current->num; i++)
-        if(current->key[i] == key) return root;
-
+    
     // 葉に挿入
     if(current->num == 1) {
         // 1 to 2
