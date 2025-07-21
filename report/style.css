@@ -11,7 +11,7 @@ body {
 /* 見出し */
 h1, h2, h3, h4, h5, h6 {
   font-weight: normal;
-  margin-top: 1.75em;
+  margin-top: 2em;
   margin-bottom: 1em;
   color: #1a1a1a;
 }
@@ -27,7 +27,7 @@ code {
   background-color: #f4f4f4;
   color: #2d2d2f;
   padding: 2px 6px;
-  border-radius: 8px;
+  border-radius: 4px;
   font-size: 12px;
 }
 
