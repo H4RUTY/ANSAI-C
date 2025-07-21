@@ -119,6 +119,9 @@ Node* insert(Node* root, int key) {
     }
     
     // 葉に挿入
+    if(current->key[0] == key || (current->num == 2 && current->key[1] == key)) {
+        return root;    // 重複している場合は挿入しない
+    }
     if(current->num == 1) {
         // 1 to 2
         if(key < current->key[0]) {
